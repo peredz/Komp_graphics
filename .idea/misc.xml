@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="uv (Komp_graphics)" />
+  </component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="b5d3f1a3-ae20-4fbf-b420-95ce8c4764ba" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="uv (Komp_graphics)" project-jdk-type="Python SDK" />
+</project>
