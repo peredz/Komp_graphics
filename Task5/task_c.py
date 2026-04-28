@@ -2,118 +2,149 @@ import pygame
 import math
 
 
+def cross(a, b, c):
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
 
-def is_convex(prev, curr, next_p):
-    # Векторное произведение для проверки выпуклости (обход против часовой)
-    val = (curr[0] - prev[0]) * (next_p[1] - curr[1]) - (curr[1] - prev[1]) * (next_p[0] - curr[0])
-    return val > 0
-
+def polygon_area(poly):
+    area = 0
+    for i in range(len(poly)):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % len(poly)]
+        area += x1 * y2 - x2 * y1
+    return area / 2
 
 def is_point_in_triangle(p, a, b, c):
-    def cross_product(p1, p2, p3):
-        return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
+    d1 = cross(p, a, b)
+    d2 = cross(p, b, c)
+    d3 = cross(p, c, a)
 
-    d1 = cross_product(p, a, b)
-    d2 = cross_product(p, b, c)
-    d3 = cross_product(p, c, a)
-    return not ((d1 < 0 or d2 < 0 or d3 < 0) and (d1 > 0 or d2 > 0 or d3 > 0))
+    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
 
+    return not (has_neg and has_pos)
 
-# --- Алгоритм объединения контуров ---
+def is_convex(prev, curr, nxt):
+    return cross(prev, curr, nxt) > 0
 
 def merge_holes(outer, holes):
-    """
-    Соединяет отверстия с внешним контуром.
-    Упрощенная версия: соединяет ближайшие точки.
-    """
-    combined = list(outer)
+
+    if polygon_area(outer) < 0:
+        outer.reverse()
+
+    combined = outer[:]
+
     for hole in holes:
-        # Для простоты найдем ближайшие точки между внешним контуром и дырой
-        min_dist = float('inf')
-        bridge = (0, 0)  # индексы (outer_idx, hole_idx)
 
-        for i, p_out in enumerate(combined):
-            for j, p_hole in enumerate(hole):
-                d = math.hypot(p_out[0] - p_hole[0], p_out[1] - p_hole[1])
-                if d < min_dist:
-                    min_dist = d
-                    bridge = (i, j)
+        if polygon_area(hole) > 0:
+            hole.reverse()
 
-        i, j = bridge
-        # Перестраиваем контур: идем по внешнему до моста -> входим в дыру
-        # -> обходим дыру целиком -> выходим по мосту обратно в ту же точку внешнего
-        hole_part = hole[j:] + hole[:j]
-        combined = combined[:i + 1] + hole_part + [hole_part[0], combined[i]] + combined[i + 1:]
+        # 1️⃣ самая правая точка отверстия
+        rightmost = max(hole, key=lambda p: p[0])
+        hole_index = hole.index(rightmost)
+
+        # ближайшая точка внешнего контура справа
+        min_dist = float("inf")
+        outer_index = 0
+
+        for i, p in enumerate(combined):
+            if p[0] > rightmost[0]:
+                dist = (p[0] - rightmost[0]) ** 2 + (p[1] - rightmost[1]) ** 2
+                if dist < min_dist:
+                    min_dist = dist
+                    outer_index = i
+
+        # если справа нет точек - берём просто ближайшую
+        if min_dist == float("inf"):
+            for i, p in enumerate(combined):
+                dist = (p[0] - rightmost[0]) ** 2 + (p[1] - rightmost[1]) ** 2
+                if dist < min_dist:
+                    min_dist = dist
+                    outer_index = i
+
+        new_poly = []
+
+        # до точки моста
+        for i in range(outer_index + 1):
+            new_poly.append(combined[i])
+
+        # мост в отверстие
+        new_poly.append(rightmost)
+
+        # обход отверстия
+        hole_cycle = hole[hole_index:] + hole[:hole_index]
+        for p in hole_cycle[1:]:
+            new_poly.append(p)
+
+        new_poly.append(rightmost)
+
+        for i in range(outer_index, len(combined)):
+            new_poly.append(combined[i])
+
+        combined = new_poly
 
     return combined
 
-
-# --- Основной Ear Clipping ---
-
 def triangulate(polygon):
-    vertices = list(polygon)
+
+    vertices = polygon[:]
     triangles = []
 
-    # Ограничитель итераций на случай ошибок геометрии
-    limit = len(vertices) * len(vertices)
-    iters = 0
+    limit = len(vertices) ** 2
+    counter = 0
 
-    while len(vertices) > 2 and iters < limit:
-        iters += 1
+    while len(vertices) > 2 and counter < limit:
+        counter += 1
+
         for i in range(len(vertices)):
+
             prev = vertices[i - 1]
             curr = vertices[i]
             nxt = vertices[(i + 1) % len(vertices)]
 
-            if is_convex(prev, curr, nxt):
-                is_ear = True
-                for j in range(len(vertices)):
-                    p = vertices[j]
-                    if p in (prev, curr, nxt): continue
-                    if is_point_in_triangle(p, prev, curr, nxt):
-                        is_ear = False
-                        break
+            if not is_convex(prev, curr, nxt):
+                continue
 
-                if is_ear:
-                    triangles.append((prev, curr, nxt))
-                    vertices.pop(i)
+            ear = True
+            for p in vertices:
+                if p in (prev, curr, nxt):
+                    continue
+                if is_point_in_triangle(p, prev, curr, nxt):
+                    ear = False
                     break
+
+            if ear:
+                triangles.append((prev, curr, nxt))
+                vertices.pop(i)
+                break
+
     return triangles
-
-
-# --- Визуализация Pygame ---
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
-clock = pygame.tick.Clock() if hasattr(pygame, 'tick') else pygame.time.Clock()
+clock = pygame.time.Clock()
 
-# 1. Внешний контур (против часовой стрелки)
 outer_poly = [(100, 100), (100, 500), (700, 500), (700, 100)]
-# 2. Отверстие (по часовой стрелке - важно для корректной математики "пустоты")
 hole1 = [(200, 200), (500, 200), (500, 400), (200, 400)]
 
-# Объединяем в один контур
-merged_contour = merge_holes(outer_poly, [hole1])
-# Триангулируем
-mesh = triangulate(merged_contour)
+merged = merge_holes(outer_poly, [hole1])
+mesh = triangulate(merged)
 
-run = True
-while run:
+print("Количество треугольников:", len(mesh))
+
+running = True
+while running:
+
     for event in pygame.event.get():
-        if event.type == pygame.QUIT: run = False
+        if event.type == pygame.QUIT:
+            running = False
 
     screen.fill((255, 255, 255))
 
-    # Рисуем результат триангуляции
     for tri in mesh:
         pygame.draw.polygon(screen, (200, 220, 255), tri)
         pygame.draw.polygon(screen, (100, 100, 100), tri, 1)
 
-    # Рисуем оригинальные контуры для четкости
-    pygame.draw.polygon(screen, (255, 0, 0), outer_poly, 3)
-    pygame.draw.polygon(screen, (0, 0, 255), hole1, 3)
-
     pygame.display.flip()
-    clock.tick(30)
+    clock.tick(60)
 
 pygame.quit()
