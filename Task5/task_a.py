@@ -23,7 +23,6 @@ def draw_triangulation(surface, points, color):
 
     v0 = points[0]
 
-    # Рисуем треугольники: (v0, v_i, v_{i+1})
     for i in range(1, len(points) - 1):
         v1 = points[i]
         v2 = points[i + 1]

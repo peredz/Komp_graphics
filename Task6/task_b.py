@@ -5,7 +5,7 @@ import math
 WIDTH, HEIGHT = 900, 700
 CENTER = (WIDTH // 2, HEIGHT // 2)
 SCALE = 120
-DISTANCE = 4  # расстояние камеры
+DISTANCE = 4
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -30,7 +30,7 @@ def rotate_y(point, angle):
     z_new = -x * sin_a + z * cos_a
     return (x_new, y, z_new)
 
-# Перспективная проекция
+# перспективная проекция
 def project(point):
     x, y, z = point
     factor = DISTANCE / (z + DISTANCE)
@@ -50,14 +50,14 @@ def create_cylinder(radius=1, height=2, segments=20):
         angle = 2 * math.pi * i / segments
         x = radius * math.cos(angle)
         z = radius * math.sin(angle)
-        vertices.append((x, -height/2, z))  # нижний круг
-        vertices.append((x, height/2, z))   # верхний круг
+        vertices.append((x, -height/2, z))
+        vertices.append((x, height/2, z))
 
     for i in range(segments):
         next_i = (i + 1) % segments
-        edges.append((2*i, 2*next_i))         # нижний круг
-        edges.append((2*i+1, 2*next_i+1))     # верхний круг
-        edges.append((2*i, 2*i+1))            # боковые рёбра
+        edges.append((2*i, 2*next_i))
+        edges.append((2*i+1, 2*next_i+1))
+        edges.append((2*i, 2*i+1))
 
     return vertices, edges
 
@@ -65,7 +65,6 @@ def create_cone(radius=1, height=2, segments=20):
     vertices = []
     edges = []
 
-    # основание
     for i in range(segments):
         angle = 2 * math.pi * i / segments
         x = radius * math.cos(angle)
@@ -78,8 +77,8 @@ def create_cone(radius=1, height=2, segments=20):
 
     for i in range(segments):
         next_i = (i + 1) % segments
-        edges.append((i, next_i))         # основание
-        edges.append((i, apex_index))     # боковые рёбра
+        edges.append((i, next_i))
+        edges.append((i, apex_index))
 
     return vertices, edges
 
@@ -93,8 +92,8 @@ def create_pyramid(size=1.5, height=2):
     ]
 
     edges = [
-        (0,1),(1,2),(2,3),(3,0),  # основание
-        (0,4),(1,4),(2,4),(3,4)   # боковые
+        (0,1),(1,2),(2,3),(3,0),
+        (0,4),(1,4),(2,4),(3,4)
     ]
 
     return vertices, edges

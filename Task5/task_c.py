@@ -38,7 +38,7 @@ def merge_holes(outer, holes):
         if polygon_area(hole) > 0:
             hole.reverse()
 
-        # 1️⃣ самая правая точка отверстия
+        # самая правая точка отверстия
         rightmost = max(hole, key=lambda p: p[0])
         hole_index = hole.index(rightmost)
 

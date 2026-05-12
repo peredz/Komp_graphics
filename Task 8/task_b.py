@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import numpy as np
 from PIL import Image
 import os
@@ -147,10 +146,10 @@ if __name__ == "__main__":
 
     adjust_brightness(img, 1.3).save(f"task2_pics/{base_name}_brightness.png")
     adjust_contrast(img, 1.5).save(f"task2_pics/{base_name}_contrast.png")
-
-    adjust_hue(img, 30).save(f"task2_pics/{base_name}_hue_shift.png")
-    adjust_saturation(img, 1.5).save(f"task2_pics/{base_name}_saturation.png")
-    adjust_value(img, 1.2).save(f"task2_pics/{base_name}_value.png")
+    # HSV
+    adjust_hue(img, 30).save(f"task2_pics/{base_name}_hue_shift.png") # тон
+    adjust_saturation(img, 1.5).save(f"task2_pics/{base_name}_saturation.png") # насыщенность
+    adjust_value(img, 1.2).save(f"task2_pics/{base_name}_value.png") # яркость
 
     apply_curves(img, 0.7).save(f"task2_pics/{base_name}_curves_dark.png")
     apply_curves(img, 1.5).save(f"task2_pics/{base_name}_curves_light.png")

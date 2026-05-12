@@ -11,9 +11,7 @@ pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-# -------------------------------------------------
-# Вращения
-# -------------------------------------------------
+
 def rotate_x(p, angle):
     x, y, z = p
     c = math.cos(angle)
@@ -30,21 +28,17 @@ def rotate_y(p, angle):
             y,
             -x * s + z * c)
 
-# -------------------------------------------------
-# Перспективная проекция
-# -------------------------------------------------
+
 def project(p):
     x, y, z = p
-    z += 3  # отодвигаем объект от камеры
+    z += 3
 
     factor = FOCAL_LENGTH / z
     x_proj = x * factor + CENTER[0]
     y_proj = -y * factor + CENTER[1]
     return (int(x_proj), int(y_proj))
 
-# -------------------------------------------------
-# Сфера
-# -------------------------------------------------
+
 def create_sphere(radius=1, lat_steps=20, lon_steps=20):
     vertices = []
     faces = []
@@ -79,9 +73,7 @@ vertices, faces = create_sphere()
 angle_x = 0
 angle_y = 0
 
-# -------------------------------------------------
-# Главный цикл
-# -------------------------------------------------
+
 running = True
 while running:
     clock.tick(60)
@@ -103,14 +95,12 @@ while running:
 
     screen.fill((255, 255, 255))
 
-    # Трансформация вершин
     transformed = []
     for v in vertices:
         r = rotate_x(v, angle_x)
         r = rotate_y(r, angle_y)
         transformed.append(r)
 
-    # Painter's algorithm (сортировка по глубине)
     face_list = []
     for face in faces:
         pts = [transformed[i] for i in face]
@@ -123,7 +113,6 @@ while running:
     for avg_z, face in face_list:
         pts_3d = [transformed[i] for i in face]
 
-        # Back-face culling
         v1 = pts_3d[1]
         v0 = pts_3d[0]
         v2 = pts_3d[2]
