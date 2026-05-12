@@ -17,9 +17,9 @@ def rgb_to_ycrcb(image):
     ])
 
     height, width = img_array.shape[:2]
-    pixels = img_array.reshape(-1, 3)
+    pixels = img_array.reshape(-1, 3) # вектор столбец и r g b (nx3)
     ycrcb = np.dot(pixels, transform_matrix.T)
-    ycrcb[:, 1:3] += 128
+    ycrcb[:, 1:3] += 128 # убираем отриц значения
     ycrcb = ycrcb.reshape(height, width, 3)
 
     return np.clip(ycrcb, 0, 255).astype(np.uint8)
